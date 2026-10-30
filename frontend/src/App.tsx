@@ -71,13 +71,9 @@ interface OptionContract {
   open_interest: number;
 }
 
-const BACKEND_HTTP = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:8000'
-  : 'https://quarters-previously-concord-sand.trycloudflare.com';
+const BACKEND_HTTP = window.location.origin;
 
-const BACKEND_WS = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'ws://localhost:8000/ws/telemetry'
-  : 'wss://quarters-previously-concord-sand.trycloudflare.com/ws/telemetry';
+const BACKEND_WS = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/telemetry`;
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'positions' | 'decisions' | 'learning' | 'ledger' | 'chain'>('positions');

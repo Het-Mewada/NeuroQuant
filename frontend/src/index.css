@@ -1,0 +1,106 @@
+/* ==========================================================================
+   NEUROQUANT DESIGN SYSTEM — INSTITUTIONAL THEME TOKENS
+   ========================================================================== */
+
+:root {
+  /* Palette: Neutrals */
+  --bg-app: #0e0e10;
+  --bg-surface: #131316;
+  --bg-surface-subtle: #18181c;
+  --bg-surface-hover: #1c1c22;
+  --border-hairline: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+
+  /* Typography Colors */
+  --text-primary: #ededed;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+
+  /* Restrained Accent */
+  --accent: #ededed;
+  --accent-contrast: #0e0e10;
+
+  /* Semantic Tones (text/numerical use only) */
+  --semantic-profit: #4ade80;
+  --semantic-loss: #f87171;
+  --semantic-warning: #fbbf24;
+
+  /* Radii (single values per requirement) */
+  --radius-control: 6px;
+  --radius-card: 10px;
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Base Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Accessibility: Focus Indicators */
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.35);
+  outline-offset: 2px;
+}
+
+/* Tabular Numerals Utility */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Motion: Under 150ms & Reduced Motion Support */
+.transition-fast {
+  transition: all 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Responsive Table Container */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: var(--bg-surface);
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: var(--border-hairline);
+  border-radius: var(--radius-control);
+}

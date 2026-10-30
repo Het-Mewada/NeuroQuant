@@ -71,6 +71,14 @@ interface OptionContract {
   open_interest: number;
 }
 
+const BACKEND_HTTP = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:8000'
+  : 'https://quarters-previously-concord-sand.trycloudflare.com';
+
+const BACKEND_WS = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'ws://localhost:8000/ws/telemetry'
+  : 'wss://quarters-previously-concord-sand.trycloudflare.com/ws/telemetry';
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<'positions' | 'decisions' | 'learning' | 'ledger' | 'chain'>('positions');
   const [summary, setSummary] = useState<AccountSummary | null>(null);
@@ -88,7 +96,7 @@ export default function App() {
   // Fetch initial REST data
   const fetchData = async () => {
     try {
-      const sumRes = await fetch('http://localhost:8000/api/v1/summary');
+      const sumRes = await fetch(`${BACKEND_HTTP}/api/v1/summary`);
       if (sumRes.ok) {
         const sumData = await sumRes.json();
         setSummary(sumData);
@@ -97,16 +105,16 @@ export default function App() {
         }
       }
 
-      const posRes = await fetch('http://localhost:8000/api/v1/positions/active');
+      const posRes = await fetch(`${BACKEND_HTTP}/api/v1/positions/active`);
       if (posRes.ok) setPositions(await posRes.json());
 
-      const decRes = await fetch('http://localhost:8000/api/v1/decisions?limit=30');
+      const decRes = await fetch(`${BACKEND_HTTP}/api/v1/decisions?limit=30`);
       if (decRes.ok) setDecisions(await decRes.json());
 
-      const ledRes = await fetch('http://localhost:8000/api/v1/ledger?limit=50');
+      const ledRes = await fetch(`${BACKEND_HTTP}/api/v1/ledger?limit=50`);
       if (ledRes.ok) setLedger(await ledRes.json());
 
-      const chainRes = await fetch('http://localhost:8000/api/v1/options/chain?underlying=NIFTY');
+      const chainRes = await fetch(`${BACKEND_HTTP}/api/v1/options/chain?underlying=NIFTY`);
       if (chainRes.ok) {
         const cData = await chainRes.json();
         setOptionChain(cData.chain || []);
@@ -125,7 +133,7 @@ export default function App() {
   // Real-time WebSocket connection
   useEffect(() => {
     const connectWs = () => {
-      const ws = new WebSocket('ws://localhost:8000/ws/telemetry');
+      const ws = new WebSocket(BACKEND_WS);
       wsRef.current = ws;
 
       ws.onopen = () => {

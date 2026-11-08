@@ -1,7 +1,12 @@
 from datetime import datetime, time
 from enum import Enum
 import zoneinfo
+import urllib.request
+import json
+import logging
 from app.core.config import settings
+
+logger = logging.getLogger("neuroquant.state_machine")
 
 
 class MarketState(str, Enum):
@@ -17,24 +22,76 @@ class MarketState(str, Enum):
 class MarketLifecycleManager:
     """
     Authoritative state machine governing market phases according to Indian Standard Time (IST).
-    Prevents entries during open volatility or end-of-day square off.
+    Checks live NSE market status directly to dynamically support special trading sessions
+    (such as Diwali Muhurat trading on weekends/holidays) alongside standard schedule.
     """
 
     def __init__(self):
         try:
             self.tz = zoneinfo.ZoneInfo(settings.MARKET_TZ)
         except Exception:
-            # Fallback for systems where tzdata might be localized
             self.tz = zoneinfo.ZoneInfo("UTC")
+        self._last_live_check_time: float = 0.0
+        self._cached_live_status: bool | None = None
 
     def get_current_ist_time(self) -> datetime:
         return datetime.now(self.tz)
 
+    def check_live_nse_exchange_open(self) -> bool | None:
+        """
+        Polls live NSE marketStatus API. Returns True if Capital Market is Open, False if Closed.
+        """
+        import time as pytime
+        now = pytime.time()
+        # Cache for 15 seconds to prevent overwhelming the endpoint
+        if self._cached_live_status is not None and (now - self._last_live_check_time) < 15.0:
+            return self._cached_live_status
+
+        try:
+            url = "https://www.nseindia.com/api/marketStatus"
+            req = urllib.request.Request(url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "application/json"
+            })
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                data = json.loads(resp.read().decode())
+                for item in data.get("marketState", []):
+                    if item.get("market") == "Capital Market":
+                        status = item.get("marketStatus", "").strip().lower()
+                        is_open = status == "open"
+                        self._cached_live_status = is_open
+                        self._last_live_check_time = now
+                        return is_open
+        except Exception as e:
+            logger.debug(f"NSE marketStatus check fallback: {e}")
+
+        # Fallback to Yahoo Finance regularMarketTime freshness check
+        try:
+            yurl = "https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?interval=1m"
+            yreq = urllib.request.Request(yurl, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(yreq, timeout=3) as yresp:
+                ydata = json.loads(yresp.read().decode())
+                meta = ydata["chart"]["result"][0]["meta"]
+                rmt = meta.get("regularMarketTime", 0)
+                # If market time was updated within the last 90 seconds, live trading is happening
+                is_live = (now - rmt) < 90.0
+                self._cached_live_status = is_live
+                self._last_live_check_time = now
+                return is_live
+        except Exception as e:
+            logger.debug(f"Yahoo live check fallback: {e}")
+
+        return None
+
     def determine_state(self, current_dt: datetime | None = None) -> MarketState:
+        # If no explicit simulated datetime is provided, we check genuine real-world live exchange status
         if current_dt is None:
+            live_is_open = self.check_live_nse_exchange_open()
+            if live_is_open is True:
+                return MarketState.ACTIVE_TRADING
             current_dt = self.get_current_ist_time()
 
-        # Check for weekend (Saturday = 5, Sunday = 6)
+        # Standard schedule fallback (Monday - Friday)
         if current_dt.weekday() in (5, 6):
             return MarketState.CLOSED
 

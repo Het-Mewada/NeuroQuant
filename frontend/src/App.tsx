@@ -170,7 +170,7 @@ export default function App() {
   // Manual Position Exit
   const handleManualExit = async (posId: string) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/positions/${posId}/exit`, {
+      const res = await fetch(`${BACKEND_HTTP}/api/v1/positions/${posId}/exit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ account_id: 'default_user' })
@@ -193,7 +193,7 @@ export default function App() {
     try {
       const amount = parseFloat(depositAmount);
       if (isNaN(amount) || amount <= 0) return;
-      const res = await fetch('http://localhost:8000/api/v1/capital/deposit', {
+      const res = await fetch(`${BACKEND_HTTP}/api/v1/capital/deposit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount, account_id: 'default_user' })
